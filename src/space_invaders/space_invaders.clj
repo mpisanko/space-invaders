@@ -26,22 +26,25 @@
    "o-o--o-o"])
 
 (defn match-part
-  "Looks for a match in a line. Comparison can be defined by :compare-fn.    Returns a vector of match start and its length"
-  [{:keys [part line]}]
+  "Looks for a match in a line. Comparison can be defined by :compare-fn.
+   Returns a vector of match start and its length"
+  [{:keys [part line match-fn]
+    :or {match-fn =}}]
   (let [part (seq part)
         len (count part)]
-    (remove
-      nil?
-      (for [start (range (- (count line)
-                            (int (/ len 2))))
-            :let  [chunk (take len (drop start line))
-                   chunk-len (count chunk)]]
-        (when (=
-                chunk
-                (if (> len chunk-len)
-                  (take chunk-len part)
-                  part))
-          [start chunk-len])))))
+    (seq
+      (remove
+        nil?
+        (for [start (range (- (count line)
+                              (int (/ len 2))))
+              :let  [chunk (take len (drop start line))
+                     chunk-len (count chunk)]]
+          (when (match-fn
+                  chunk
+                  (if (> len chunk-len)
+                    (take chunk-len part)
+                    part))
+            [start chunk-len]))))))
 
 (s/fdef detect-invaders
   :args (s/cat :radar-lines ::sis/radar-lines)
