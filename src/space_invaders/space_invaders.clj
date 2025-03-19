@@ -25,6 +25,7 @@
    "-o-oo-o-"
    "o-o--o-o"])
 
+
 (defn match-part
   "Looks for a match in a line. Comparison can be defined by :compare-fn.
    Returns a vector of match start and its length"
@@ -53,24 +54,18 @@
 (defn detect-invaders
   "The main function taking the radar reading and determining positions of known invaders."
   [radar-lines]
-  (let [starting-positions-1 (remove
-                              nil?
-                              (map-indexed
-                                (fn [idx line]
-                                  (when-let [matches (seq (match-part
-                                                            {:part (first invader-1)
-                                                             :line line}))]
-                                    [idx matches]))
-                                radar-lines))
-        starting-positions-2 (remove
-                               nil?
-                               (map-indexed
-                                 (fn [idx line]
-                                   (when-let [matches (seq (match-part
-                                                             {:part (first invader-2)
-                                                              :line line}))]
-                                     [idx matches]))
-                                 radar-lines))]
+  (let [find-starting-points-for (fn [top-line]
+                                   (remove
+                                     nil?
+                                     (map-indexed
+                                       (fn [idx line]
+                                         (when-let [matches (match-part
+                                                              {:part top-line
+                                                               :line line})]
+                                           [idx matches]))
+                                       radar-lines)))
+        starting-positions-1 (find-starting-points-for (first invader-1))
+        starting-positions-2 (find-starting-points-for (first invader-2))]
     [starting-positions-1 starting-positions-2]
     ;; TODO handle the rest
     ))
