@@ -48,13 +48,15 @@
             [start chunk-len]))))))
 
 (s/fdef detect-invaders
-  :args (s/cat :radar-lines ::sis/radar-lines)
+  :args (s/cat :radar-lines ::sis/radar-lines
+               :tolerance :sis/tolerance)
   :ret ::sis/invader-positions)
 
 (defn detect-invaders
   "The main function taking the radar reading and determining positions of known invaders."
-  [radar-lines]
-  (let [find-starting-points-for (fn [top-line]
+  [radar-lines tolerance]
+  (let [allowed-range (take (- (count radar-lines) tolerance) radar-lines)
+        find-starting-points-for (fn [top-line]
                                    (remove
                                      nil?
                                      (map-indexed
@@ -63,7 +65,7 @@
                                                               {:part top-line
                                                                :line line})]
                                            [idx matches]))
-                                       radar-lines)))
+                                       allowed-range)))
         starting-positions-1 (find-starting-points-for (first invader-1))
         starting-positions-2 (find-starting-points-for (first invader-2))]
     [starting-positions-1 starting-positions-2]
@@ -78,6 +80,8 @@
                         first
                         slurp
                         (str/split #"\n"))
-        invaders (detect-invaders radar-lines)]
+        tolerance (or (Integer/parseInt (second args))
+                      5)
+        invaders (detect-invaders radar-lines tolerance)]
     (log/infof "top rows %s" invaders))
   )

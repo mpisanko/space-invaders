@@ -15,3 +15,5 @@
 (s/def ::invader-positions
   (and vector?
        (s/coll-of ::invader-position :count 2)))
+
+(s/def ::tolerance pos-int?)
