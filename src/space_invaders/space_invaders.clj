@@ -1,12 +1,39 @@
 (ns space-invaders.space-invaders
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.tools.logging :as log]
+            [clojure.spec.alpha :as s]
+            [space-invaders.invaders-spec :as sis]))
 
-(defn greet
-  "Callable entry point to the application."
-  [data]
-  (println (str "Hello, " (or (:name data) "World") "!")))
+(def invader-1
+  ["--o-----o--"
+   "---o---o---"
+   "--ooooooo--"
+   "-oo-ooo-oo-"
+   "ooooooooooo"
+   "o-ooooooo-o"
+   "o-o-----o-o"
+   "---oo-oo---"])
+
+(def invader-2
+  ["---oo---"
+   "--oooo--"
+   "-oooooo-"
+   "oo-oo-oo"
+   "oooooooo"
+   "--o--o--"
+   "-o-oo-o-"
+   "o-o--o-o"])
+
+(s/fdef detect-invaders
+  :args (s/cat :radar-lines ::sis/radar-lines)
+  :ret ::sis/invader-positions)
+
+(defn detect-invaders
+  "The main function taking the radar reading and determining positions of known invaders."
+  [radar-lines])
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Entrypoint to the application."
   [& args]
-  (greet {:name (first args)}))
+  (log/infof "Space Invaders Radar Interpreter. Got %s" args)
+  )
