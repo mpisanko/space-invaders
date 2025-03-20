@@ -76,12 +76,18 @@
   "Entrypoint to the application."
   [& args]
   (log/infof "Space Invaders Radar Interpreter. Got %s" args)
-  (let [radar-lines (-> args
-                        first
-                        slurp
-                        (str/split #"\n"))
-        tolerance (or (Integer/parseInt (second args))
-                      5)
-        invaders (detect-invaders radar-lines tolerance)]
-    (log/infof "top rows %s" invaders))
-  )
+  (if (seq args)
+    (let [radar-lines (-> args
+                          first
+                          slurp
+                          (str/split #"\n"))
+          tolerance   (try
+                        (Integer/parseInt (or (second args) "5"))
+                        (catch Exception _
+                          5))
+          invaders    (detect-invaders radar-lines tolerance)]
+
+      (if (seq invaders)
+        (log/infof "Detected the following Invaders:\n%s" (str/join " " (map (partial str/join "\n") invaders)))
+        (log/info "No Space Invaders found.")))
+    (log/infof "No input provided, exiting. Please provide path to file with radar snapshot to analyse.")))
