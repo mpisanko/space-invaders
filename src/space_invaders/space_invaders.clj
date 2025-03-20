@@ -32,21 +32,31 @@
   [{:keys [part line match-fn]
     :or {match-fn =}}]
   (let [part (seq part)
-        len (count part)]
+        len (count part)
+        half-len (int (/ len 2))]
     (seq
       (remove
         nil?
         ;; TODO loop - recur might save some cycles
-        (for [start (range (- (count line)
-                              (int (/ len 2))))
-              :let  [chunk (take len (drop start line))
-                     chunk-len (count chunk)]]
-          (when (match-fn
-                  chunk
-                  (if (> len chunk-len)
-                    (take chunk-len part)
-                    part))
-            [start chunk-len]))))))
+        ;; handle invader partially visible on the left
+        (into
+          (for [prefix (range half-len len)
+               :let   [chunk (take prefix line)
+                       part (drop (- len prefix) part)]]
+            (when (match-fn
+                    chunk
+                    part)
+              [0 prefix]))
+         (for [start (range (- (count line)
+                               half-len))
+               :let  [chunk (take len (drop start line))
+                      chunk-len (count chunk)]]
+           (when (match-fn
+                   chunk
+                   (if (> len chunk-len)
+                     (take chunk-len part)
+                     part))
+             [start chunk-len])))))))
 
 (defn get-region
   [{:keys [lines line-no start height length tolerance]}]
@@ -78,7 +88,6 @@
 (defn match-rest
   [{:keys [invader _lines starting-positions _tolerance] :as args}]
   (let [height (count invader)]
-    (log/tracef "Found starting positions %s" (first starting-positions))
     (mapcat
       (fn [[line-no positions]]
         (keep
@@ -118,7 +127,6 @@
                                            :tolerance          tolerance})))
         invaders-1 (vec (find-invaders (rest invader-1) starting-positions-1))
         invaders-2 (find-invaders (rest invader-2) starting-positions-2)]
-    (log/tracef "INV-1 %s INV-2 %s together %s" invaders-1 invaders-2 (into invaders-1 invaders-2))
     (into invaders-1 invaders-2)))
 
 (defn -main

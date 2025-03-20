@@ -47,7 +47,7 @@ ooooooooo-o-o-
 ooooooo-o-----
 o-----o-o-----
 -oo-oo-----o--"]
-      (is (= [[[0 3] [8 9]]]
+      (is (= [[[1 0] [8 9]]]
              (detect-invaders (str/split invader-type-1 #"\n") 0)))))
 
   (testing "a single type 2 invader"
@@ -61,6 +61,19 @@ o-----o-o-----
 ---o-oo-o--o-
 --o-o--o-o---"]
       (is (= [[[0 2] [7 10]]]
+             (detect-invaders (str/split invader-type-2 #"\n") 0)))))
+
+  (testing "a single type 2 invader coming over the left edge"
+    (let [invader-type-2
+"-oo---oo-
+oooo----o
+ooooo-o-o
+-oo-oo---
+ooooooooo
+o--o--o-o
+-oo-o--o-
+o--o-o---"]
+      (is (= [[[0 0] [7 6]]]
              (detect-invaders (str/split invader-type-2 #"\n") 0)))))
 
   (testing "a single type 2 invader coming over the right edge"
