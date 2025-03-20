@@ -88,4 +88,25 @@ o--o-o---"]
 --o-o--"]
       (is (= [[[0 2] [7 7]]]
              (detect-invaders (str/split invader-type-2 #"\n") 0)))))
-  )
+
+
+  (testing "multiple invaders"
+    (let [radar
+"-----o-----o--ooooo-----o-----o--ooooo
+------o---o--------------o---o--------
+-----ooooooo----ooo-----ooooooo----ooo
+----oo-ooo-oo----oo----oo-ooo-oo----oo
+---ooooooooooo-o-o----ooooooooooo-o-o-
+---o-ooooooo-o--------o-ooooooo-o-----
+---o-o-----o-o--------o-o-----o-o-----
+------oo-oo-----o--------oo-oo-----o--
+-o-o-o-o-o-o---oo----o-o-o-o-o-o-o-o--
+-o-o-o-o-o-o--oooo---o-o-o-o-o-o-o-o--
+-o-o-o-o-o-o-oooooo--o-o-o-o-o-o-o-o--
+-o-o-o-o-o-ooo-oo-oo-o-o-o-o-o-o-o-o--
+-o-o-o-o-o-ooooooooo-o-o-o-o-o-o-o-o--
+-o-o-o-o-o-o--o--o---o-o-o-o-o-o-o-o--
+-o-o-o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o--
+-o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o-o-o--"]
+      (is (= [[[0 22] [7 33]] [[0 3] [7 14]] [[8 12] [15 20]]]
+             (detect-invaders (str/split radar #"\n") 0))))))
