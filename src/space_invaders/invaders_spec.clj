@@ -17,3 +17,12 @@
        (s/coll-of ::invader-position :count 2)))
 
 (s/def ::tolerance pos-int?)
+
+(s/def ::starting-positions ::invader-positions)
+
+(s/def ::lines ::radar-snapshot)
+
+(s/def ::invader ::radar-line)
+
+(s/def ::match-rest-args
+  (s/keys :req-un [::lines ::invader ::starting-positions ::tolerance]))

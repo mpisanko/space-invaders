@@ -47,6 +47,50 @@
                     part))
             [start chunk-len]))))))
 
+(defn get-region
+  [{:keys [lines line-no start height length tolerance]}]
+  (->> lines
+       (drop (dec line-no))
+       (take height)
+       (map (fn [line]
+              (->> line
+                   (drop (- start tolerance))
+                   (take (+ length tolerance)))))))
+
+(s/fdef match-rest
+  :args (s/cat :argz ::sis/match-rest-args)
+  :ret ::sis/invader-positions)
+(defn match-rest
+  [{:keys [invader _lines starting-positions _tolerance] :as args}]
+  (let [height (count invader)]
+    (mapv
+      (fn [[line-no positions]]
+        (remove
+          nil?
+          (map
+            (fn [[start length]]
+              (let [region (get-region
+                             (assoc args
+                                    :line-no   line-no
+                                    :start     start
+                                    :height    height
+                                    :length    length))
+                    matching-lines (remove
+                                     nil?
+                                     (map-indexed
+                                       (fn [idx [template line]]
+                                         (when-let [ms (match-part
+                                                         {:part template
+                                                          :line line})]
+                                           [idx ms]))
+                                       (zipmap invader region)))]
+                (when (= (count region)
+                         (count matching-lines))
+                  [[line-no start]
+                   [(+ line-no (count region)) (+ start length)]])))
+            positions)))
+      starting-positions)))
+
 (s/fdef detect-invaders
   :args (s/cat :radar-lines ::sis/radar-lines
                :tolerance :sis/tolerance)
@@ -67,10 +111,15 @@
                                            [idx matches]))
                                        allowed-range)))
         starting-positions-1 (find-starting-points-for (first invader-1))
-        starting-positions-2 (find-starting-points-for (first invader-2))]
-    [starting-positions-1 starting-positions-2]
-    ;; TODO handle the rest
-    ))
+        starting-positions-2 (find-starting-points-for (first invader-2))
+        find-invaders (fn [rest-lines starting-positions]
+                        (keep seq (match-rest {:invader            rest-lines
+                                               :lines              radar-lines
+                                               :starting-positions starting-positions
+                                               :tolerance          tolerance})))
+        invaders-1 (find-invaders (drop 1 invader-1) starting-positions-1)
+        invaders-2 (find-invaders (drop 1 invader-2) starting-positions-2)]
+    (into invaders-1 invaders-2)))
 
 (defn -main
   "Entrypoint to the application."
