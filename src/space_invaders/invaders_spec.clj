@@ -16,7 +16,8 @@
   (and vector?
        (s/coll-of ::invader-position :count 2)))
 
-(s/def ::tolerance nat-int?)
+(s/def ::tolerance (and nat-int?
+                        #(< % 4)))
 
 (s/def ::starting-positions ::invader-positions)
 
@@ -24,5 +25,9 @@
 
 (s/def ::invader ::radar-line)
 
+(s/def ::match-fn
+  #(contains? #{:eq :fuz} %))
+
 (s/def ::match-rest-args
-  (s/keys :req-un [::lines ::invader ::starting-positions ::tolerance]))
+  (s/keys :req-un [::lines ::invader ::starting-positions ::tolerance ::match-fn]))
+
