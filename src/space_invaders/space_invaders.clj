@@ -36,6 +36,7 @@
     (seq
       (remove
         nil?
+        ;; TODO loop - recur might save some cycles
         (for [start (range (- (count line)
                               (int (/ len 2))))
               :let  [chunk (take len (drop start line))
@@ -50,12 +51,26 @@
 (defn get-region
   [{:keys [lines line-no start height length tolerance]}]
   (->> lines
-       (drop (dec line-no))
+       (drop (inc line-no))
        (take height)
        (map (fn [line]
               (->> line
                    (drop (- start tolerance))
                    (take (+ length tolerance)))))))
+
+(defn match-invader
+  [{:keys [invader line-no start length] :as args}]
+  (let [region (get-region args)
+        matching-lines (keep
+                         (fn [[template line]]
+                           (match-part
+                             {:part template
+                              :line line}))
+                         (zipmap invader region))]
+    (when (= (count region)
+             (count matching-lines))
+      [[line-no start]
+       [(+ line-no (count region)) (+ start length)]])))
 
 (s/fdef match-rest
   :args (s/cat :argz ::sis/match-rest-args)
@@ -63,37 +78,22 @@
 (defn match-rest
   [{:keys [invader _lines starting-positions _tolerance] :as args}]
   (let [height (count invader)]
-    (mapv
+    (log/tracef "Found starting positions %s" (first starting-positions))
+    (mapcat
       (fn [[line-no positions]]
-        (remove
-          nil?
-          (map
-            (fn [[start length]]
-              (let [region (get-region
-                             (assoc args
-                                    :line-no   line-no
-                                    :start     start
-                                    :height    height
-                                    :length    length))
-                    matching-lines (remove
-                                     nil?
-                                     (map-indexed
-                                       (fn [idx [template line]]
-                                         (when-let [ms (match-part
-                                                         {:part template
-                                                          :line line})]
-                                           [idx ms]))
-                                       (zipmap invader region)))]
-                (when (= (count region)
-                         (count matching-lines))
-                  [[line-no start]
-                   [(+ line-no (count region)) (+ start length)]])))
-            positions)))
+        (keep
+          (fn [[start length]]
+            (match-invader (assoc args
+                                  :line-no   line-no
+                                  :start     start
+                                  :height    height
+                                  :length    length)))
+          positions))
       starting-positions)))
 
 (s/fdef detect-invaders
-  :args (s/cat :radar-lines ::sis/radar-lines
-               :tolerance :sis/tolerance)
+  :args (s/cat :radar-lines ::sis/radar-snapshot
+               :tolerance ::sis/tolerance)
   :ret ::sis/invader-positions)
 
 (defn detect-invaders
@@ -101,24 +101,24 @@
   [radar-lines tolerance]
   (let [allowed-range (take (- (count radar-lines) tolerance) radar-lines)
         find-starting-points-for (fn [top-line]
-                                   (remove
-                                     nil?
-                                     (map-indexed
-                                       (fn [idx line]
-                                         (when-let [matches (match-part
-                                                              {:part top-line
-                                                               :line line})]
-                                           [idx matches]))
-                                       allowed-range)))
+                                   (keep-indexed
+                                     (fn [idx line]
+                                       (when-let [matches (match-part
+                                                            {:part top-line
+                                                             :line line})]
+                                         [idx matches]))
+                                     allowed-range))
         starting-positions-1 (find-starting-points-for (first invader-1))
         starting-positions-2 (find-starting-points-for (first invader-2))
-        find-invaders (fn [rest-lines starting-positions]
-                        (keep seq (match-rest {:invader            rest-lines
-                                               :lines              radar-lines
-                                               :starting-positions starting-positions
-                                               :tolerance          tolerance})))
-        invaders-1 (find-invaders (drop 1 invader-1) starting-positions-1)
-        invaders-2 (find-invaders (drop 1 invader-2) starting-positions-2)]
+        find-invaders (fn [invader starting-positions]
+                        (filterv (comp not empty?)
+                              (match-rest {:invader            invader
+                                           :lines              radar-lines
+                                           :starting-positions starting-positions
+                                           :tolerance          tolerance})))
+        invaders-1 (vec (find-invaders (rest invader-1) starting-positions-1))
+        invaders-2 (find-invaders (rest invader-2) starting-positions-2)]
+    (log/tracef "INV-1 %s INV-2 %s together %s" invaders-1 invaders-2 (into invaders-1 invaders-2))
     (into invaders-1 invaders-2)))
 
 (defn -main
@@ -137,6 +137,12 @@
           invaders    (detect-invaders radar-lines tolerance)]
 
       (if (seq invaders)
-        (log/infof "Detected the following Invaders:\n%s" (str/join " " (map (partial str/join "\n") invaders)))
+        (log/infof "Detected the following Invaders:\n%s" (str/join "\n" invaders))
         (log/info "No Space Invaders found.")))
-    (log/infof "No input provided, exiting. Please provide path to file with radar snapshot to analyse.")))
+    (log/infof "No input provided, exiting. Please provide path to file with radar snapshot to analyse (and optionally tolerance of line shift - zero or more).")))
+
+(comment
+  (def lines (-> "./invaders.txt" slurp (str/split #"\n")))
+  (def invaders (detect-invaders lines 0))
+
+  #_1)

@@ -16,7 +16,7 @@
   (and vector?
        (s/coll-of ::invader-position :count 2)))
 
-(s/def ::tolerance pos-int?)
+(s/def ::tolerance nat-int?)
 
 (s/def ::starting-positions ::invader-positions)
 
