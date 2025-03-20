@@ -1,6 +1,8 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
-        org.clojure/tools.logging {:mvn/version "1.3.0"}}
+        org.clojure/tools.logging {:mvn/version "1.3.0"}
+        ch.qos.logback/logback-classic {:mvn/version "1.5.15"}
+        org.slf4j/slf4j-api {:mvn/version "2.0.9"}}
  :aliases
  {:run-m {:main-opts ["-m" "space-invaders.space-invaders"]}
   :build {:deps {io.github.clojure/tools.build
