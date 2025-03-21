@@ -16,14 +16,18 @@
   (and vector?
        (s/coll-of ::invader-position :count 2)))
 
-(s/def ::tolerance (and nat-int?
-                        #(< % 4)))
+(s/def ::tolerance
+  (and nat-int?
+       #(< % 4)))
 
-(s/def ::starting-positions ::invader-positions)
+(s/def ::starting-positions
+  (s/coll-of (s/tuple nat-int?
+                      (and vector?
+                           (s/coll-of ::invader-position)))))
 
 (s/def ::lines ::radar-snapshot)
 
-(s/def ::invader ::radar-line)
+(s/def ::invader ::radar-snapshot)
 
 (s/def ::match-fn
   #(contains? #{:eq :fuz} %))

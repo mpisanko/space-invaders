@@ -53,29 +53,31 @@
         part (seq part)
         len (count part)
         half-len (int (/ len 2))]
-    (seq
-      (remove
-        nil?
-        ;; TODO loop - recur might save some cycles
-        (into
-          ;; handle invader partially visible on the left
-          (for [prefix (range half-len len)
-                :let   [chunk (take prefix line)
-                        part (drop (- len prefix) part)]]
-            (when (match-fn
-                    chunk
-                    part)
-              [0 prefix]))
-          (for [start (range (- (count line)
-                                half-len))
-                :let  [chunk (take len (drop start line))
-                       chunk-len (count chunk)]]
-            (when (match-fn
-                    chunk
-                    (if (> len chunk-len)
-                      (take chunk-len part)
-                      part))
-              [start chunk-len])))))))
+    (when-let [positions
+               (seq
+                 (remove
+                   nil?
+                   ;; TODO loop - recur might save some cycles
+                   (into
+                     ;; handle invader partially visible on the left
+                     (for [prefix (range half-len len)
+                           :let   [chunk (take prefix line)
+                                   part (drop (- len prefix) part)]]
+                       (when (match-fn
+                               chunk
+                               part)
+                         [0 prefix]))
+                     (for [start (range (- (count line)
+                                           half-len))
+                           :let  [chunk (take len (drop start line))
+                                  chunk-len (count chunk)]]
+                       (when (match-fn
+                               chunk
+                               (if (> len chunk-len)
+                                 (take chunk-len part)
+                                 part))
+                         [start chunk-len])))))]
+      (vec positions))))
 
 (defn get-region
   [{:keys [lines line-no start height length tolerance]}]
@@ -179,6 +181,6 @@ Please provide:
 
 (comment
   (def lines (-> "./invaders.txt" slurp (str/split #"\n")))
-  (def invaders (detect-invaders lines 0))
+  (def invaders (detect-invaders lines 0 :eq))
 
   #_1)
