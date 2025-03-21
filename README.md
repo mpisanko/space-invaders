@@ -104,8 +104,8 @@ Clone this repository. You'll need clojure CLI installed.
 
 ### Run
 
-clj -M:run-m <RADAR_FILE_PATH> [<TOLERANCE>] [<ACCURACY>]
+`clj -M:run-m <RADAR_FILE_PATH> <TOLERANCE> <ACCURACY>` 
 
 ### Test
 
-clj -X:test
+`clj -X:test`
