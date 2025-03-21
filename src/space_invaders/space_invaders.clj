@@ -26,7 +26,8 @@
    "o-o--o-o"])
 
 (defn fuzzy-matcher
-  [part line]
+  [accuracy part line]
+  (assert (<= accuracy 100))
   (let [{:keys [eq cnt]} (reduce (fn [acc [k v]]
                                         (-> acc
                                             (update :cnt inc)
@@ -37,20 +38,17 @@
                                    {:eq  0
                                     :cnt 0}
                                    (map vector part line))]
-    (<= 0.8
-        (/ eq
-           cnt))))
-
-(def MATCHERS
-  {:eq =
-   :fuz fuzzy-matcher})
+    (<= accuracy
+        (int
+          (* 100
+             (/ eq
+                cnt))))))
 
 (defn match-part
   "Looks for a match in a line. Comparison can be defined by :compare-fn.
    Returns a vector of match start and its length"
   [{:keys [part line match-fn]}]
-  (let [match-fn (get MATCHERS match-fn =)
-        part (seq part)
+  (let [part (seq part)
         len (count part)
         half-len (int (/ len 2))]
     (when-let [positions
@@ -108,7 +106,7 @@
   :args (s/cat :argz ::sis/match-rest-args)
   :ret ::sis/invader-positions)
 (defn match-rest
-  [{:keys [invader _lines starting-positions _tolerance] :as args}]
+  [{:keys [invader starting-positions] :as args}]
   (let [height (count invader)]
     (mapcat
       (fn [[line-no positions]]
@@ -123,14 +121,14 @@
       starting-positions)))
 
 (s/fdef detect-invaders
-  :args (s/cat :radar-lines ::sis/radar-snapshot
-               :tolerance ::sis/tolerance
-               :match-fn ::sis/match-fn)
+  :args (s/cat :argz ::sis/detect-invaders-args)
   :ret ::sis/invader-positions)
 
 (defn detect-invaders
   "The main function taking the radar reading and determining positions of known invaders."
-  [radar-lines tolerance match-fn]
+  [{:keys [radar-lines tolerance match-fn]
+    :or {match-fn (partial fuzzy-matcher 100)
+         tolerance 0}}]
   (let [allowed-range (take (- (count radar-lines) tolerance) radar-lines)
         find-starting-points-for (fn [top-line]
                                    (keep-indexed
@@ -154,21 +152,27 @@
         invaders-2 (find-invaders (rest invader-2) starting-positions-2)]
     (into invaders-1 invaders-2)))
 
+(defn safe-parse-integer
+  [input default]
+  (try
+    (Integer/parseInt (or input (str default)))
+    (catch Exception _
+      default)))
+
 (defn -main
   "Entrypoint to the application."
   [& args]
   (log/infof "Space Invaders Radar Interpreter. Got %s" args)
   (if (seq args)
-    (let [[file-name tolerance match-fn] args
+    (let [[file-name tolerance accuracy] args
           radar-lines (-> file-name
                           slurp
                           (str/split #"\n"))
-          tolerance   (try
-                        (Integer/parseInt (or tolerance "0"))
-                        (catch Exception _
-                          0))
-          match-fn    (keyword (or match-fn :eq))
-          invaders    (detect-invaders radar-lines tolerance match-fn)]
+          tolerance   (safe-parse-integer tolerance 0)
+          accuracy    (safe-parse-integer accuracy 100)
+          invaders    (detect-invaders {:radar-lines radar-lines
+                                        :tolerance tolerance
+                                        :match-fn (partial fuzzy-matcher accuracy)})]
 
       (if (seq invaders)
         (log/infof "Detected the following Invaders:\n%s" (str/join "\n" invaders))
@@ -177,10 +181,11 @@
 Please provide:
  - [Required] path to file with radar snapshot to analyse
  - [Optional] tolerance: line shift - 0 upto 3 (default: 0)
- - [Optional] matcher-fn: :eq or :fuz - equality or fuzzy match (default :eq)")))
+ - [Optional] accuracy: percentage of similarity to invader (default 100)")))
 
 (comment
   (def lines (-> "./invaders.txt" slurp (str/split #"\n")))
-  (def invaders (detect-invaders lines 0 :eq))
+  (def invaders (detect-invaders {:radar-lines lines
+                                  :tolerance 0}))
 
   #_1)

@@ -21,7 +21,7 @@
 ------oo-oo-----o--"]
     (is (= [[[1 3] [8 14]]]
            (detect-invaders
-             (str/split invader-type-1 #"\n") 0 :eq)))))
+             {:radar-lines (str/split invader-type-1 #"\n")} )))))
 
   (testing "a partial type 1 invader coming over the right edge"
     (let [invader-type-1
@@ -35,7 +35,7 @@
 ---o-o-----
 ------oo-oo"]
       (is (= [[[1 3] [8 11]]]
-             (detect-invaders (str/split invader-type-1 #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split invader-type-1 #"\n")} )))))
 
   (testing "a partial type 1 invader coming over the left edge"
     (let [invader-type-1
@@ -49,7 +49,7 @@ ooooooo-o-----
 o-----o-o-----
 -oo-oo-----o--"]
       (is (= [[[1 0] [8 9]]]
-             (detect-invaders (str/split invader-type-1 #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split invader-type-1 #"\n")} )))))
 
   (testing "a single type 2 invader"
     (let [invader-type-2
@@ -62,7 +62,7 @@ o-----o-o-----
 ---o-oo-o--o-
 --o-o--o-o---"]
       (is (= [[[0 2] [7 10]]]
-             (detect-invaders (str/split invader-type-2 #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split invader-type-2 #"\n")} )))))
 
   (testing "a single type 2 invader coming over the left edge"
     (let [invader-type-2
@@ -75,7 +75,7 @@ o--o--o-o
 -oo-o--o-
 o--o-o---"]
       (is (= [[[0 0] [7 6]]]
-             (detect-invaders (str/split invader-type-2 #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split invader-type-2 #"\n")} )))))
 
   (testing "a single type 2 invader coming over the right edge"
     (let [invader-type-2
@@ -88,7 +88,7 @@ o--o-o---"]
 ---o-oo
 --o-o--"]
       (is (= [[[0 2] [7 7]]]
-             (detect-invaders (str/split invader-type-2 #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split invader-type-2 #"\n")} )))))
 
 
   (testing "multiple invaders"
@@ -110,7 +110,7 @@ o--o-o---"]
 -o-o-o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o--
 -o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o-o-o--"]
       (is (= [[[0 22] [7 33]] [[0 3] [7 14]] [[8 12] [15 20]]]
-             (detect-invaders (str/split radar #"\n") 0 :eq)))))
+             (detect-invaders {:radar-lines (str/split radar #"\n")} )))))
 
   (testing "shifted lines"
     (let [shifted-invader
@@ -125,16 +125,17 @@ o--o-o---"]
 ------oo-oo-----o--"]
     (is (= [[[1 3] [8 14]]]
            (detect-invaders
-             (str/split shifted-invader #"\n") 3 :eq)))))
-  )
+             {:radar-lines (str/split shifted-invader #"\n")} ))))))
 
 (deftest fuzzy-matcher-test
   (testing "true when 8 out of 10 elements match"
     (is (true?
-          (fuzzy-matcher "----------"
+          (fuzzy-matcher 80
+                         "----------"
                          "--------oo"))))
 
   (testing "false when 7 out of 10 match"
     (is (false?
-          (fuzzy-matcher "----------"
+          (fuzzy-matcher 80
+                         "----------"
                          "-------ooo")))))
