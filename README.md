@@ -1,4 +1,4 @@
-# Development assignment
+# Space Invaders
 
 Space invaders are upon us!
 You were shortlisted as one of the great minds to help us track them down.
@@ -93,3 +93,19 @@ o-----oo-------------------o--o-----o-----------o------o-------o----o-----------
 o--oo------o-----oo--o-oo------------oo--o------o--o-------------oo----o------------oooo-o------oo--
 -----o----------ooooooooo--------------oo--------------oo-----o-----o-o--o------o----------o----o---
 ~~~~
+
+# Solution
+
+I have allowed for some line shift (configured by `tolerance` parameter values [0-3]) and also `accuracy` of matching (defined as integer percentage - up to 100)
+
+## Usage
+
+Clone this repository. You'll need clojure CLI installed.
+
+### Run
+
+clj -M:run-m <RADAR_FILE_PATH> [<TOLERANCE>] [<ACCURACY>]
+
+### Test
+
+clj -X:test
