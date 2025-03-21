@@ -2,6 +2,9 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.test.alpha :as stest]
             [clojure.string :as str]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as prop]
+            [clojure.test.check.clojure-test :refer [defspec]]
             [space-invaders.space-invaders :refer :all]))
 
 (stest/instrument `detect-invaders)
@@ -128,14 +131,60 @@ o--o-o---"]
              {:radar-lines (str/split shifted-invader #"\n")} ))))))
 
 (deftest fuzzy-matcher-test
-  (testing "true when 8 out of 10 elements match"
+  (testing "true when 8 out of 10 elements match with 80% accuracy"
     (is (true?
           (fuzzy-matcher 80
                          "----------"
                          "--------oo"))))
 
-  (testing "false when 7 out of 10 match"
+  (testing "false when 7 out of 10 match with 80% accuracy"
     (is (false?
           (fuzzy-matcher 80
                          "----------"
                          "-------ooo")))))
+
+(def line-generator
+  (gen/fmap
+    str/join
+    (gen/vector
+      (gen/elements #{\- \o}) 10)))
+
+(defn flip-char
+  [c]
+  (if (= \o c)
+    \-
+    \o))
+
+(defn update-string
+  [s idxs]
+  (str/join
+    (reduce (fn [acc idx]
+              (update acc idx flip-char))
+            (vec (seq s))
+            idxs)))
+
+
+(defspec fuzzy-matcher-same-prop 100
+  (prop/for-all [inp line-generator]
+                (true? (fuzzy-matcher 100 inp inp))))
+
+(defspec fuzzy-matcher-90-pc-prop 100
+  ;; when you change a single char in 10 character string - there will be a 90% match
+  (prop/for-all [inp line-generator]
+                (= [true false]
+                   (let [inp2 (update-string inp [0])]
+                     [(fuzzy-matcher 90 inp inp2)
+                      (fuzzy-matcher 91 inp inp2)]))))
+
+(defspec fuzzy-matcher-80-pc-prop 100
+  ;; when you change a single char in 10 character string - there will be a 90% match
+  (prop/for-all [inp line-generator]
+
+                (= [true false]
+                   (let [inp2 (update-string inp [0 1])]
+                     [(fuzzy-matcher 80
+                                     inp
+                                     inp2)
+                      (fuzzy-matcher 81
+                                     inp
+                                     inp2)]))))
