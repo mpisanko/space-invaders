@@ -89,7 +89,7 @@
 
 (defn match-invader
   [{:keys [invader line-no start length match-fn] :as args}]
-  (let [region (get-region args)
+  (let [region         (get-region args)
         matching-lines (keep
                          (fn [[template line]]
                            (match-part
@@ -120,6 +120,24 @@
           positions))
       starting-positions)))
 
+(defn deduplicate-overlapping
+  "If starting point is within five positions from previous on the same line - discard the subsequent"
+  [invaders]
+  ;; invaders
+  (reduce-kv (fn [acc _ v]
+               (let [positions (sort-by second v)
+                     fst (first positions)
+                     deduped (:ps
+                              (reduce (fn [acc [[_ s] _ :as v]]
+                                        (if (> (- s (:s acc)) 5)
+                                          (update acc :ps conj v)
+                                          acc))
+                                      {:s (second (first fst)) :ps [fst]}
+                                      (rest positions)))]
+                 (concat acc deduped)))
+             []
+             (group-by ffirst invaders)))
+
 (s/fdef detect-invaders
   :args (s/cat :argz ::sis/detect-invaders-args)
   :ret ::sis/invader-positions)
@@ -149,8 +167,10 @@
                                            :starting-positions starting-positions
                                            :tolerance          tolerance
                                            :match-fn           match-fn})))
-        invaders-1 (find-invaders (rest invader-1) starting-positions-1)
-        invaders-2 (find-invaders (rest invader-2) starting-positions-2)
+        invaders-1 (deduplicate-overlapping
+                     (find-invaders (rest invader-1) starting-positions-1))
+        invaders-2 (deduplicate-overlapping
+                     (find-invaders (rest invader-2) starting-positions-2))
         combined (sort-by ffirst (into invaders-1 invaders-2))]
     (vec combined)))
 
@@ -186,8 +206,21 @@ Please provide:
  - [Optional] accuracy: percentage of similarity to invader (default 100)")))
 
 (comment
-  (def lines (-> "./invaders.txt" slurp (str/split #"\n")))
+  (def lines (-> "./radar.txt" slurp (str/split #"\n")))
   (def invaders (detect-invaders {:radar-lines lines
-                                  :tolerance 0}))
+                                  :tolerance 0
+                                  :match-fn (partial fuzzy-matcher 80)}))
 
+  (def by-line (reduce-kv (fn [acc _ v]
+                            (let [positions (sort-by second v)
+                                  fst (first positions)
+                                  deduped (:ps (reduce (fn [acc [[_ s] _ :as v]]
+                                                     (if (< 5 (- (:s acc) s))
+                                                       (update acc :ps conj s)
+                                                       acc))
+                                                   {:s (second (first fst)) :ps [fst]}
+                                                   positions))]
+                              (concat acc deduped)))
+                          []
+                          (group-by ffirst invaders)))
   #_1)

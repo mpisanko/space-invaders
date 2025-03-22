@@ -112,7 +112,7 @@ o--o-o---"]
 -o-o-o-o-o-o--o--o---o-o-o-o-o-o-o-o--
 -o-o-o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o--
 -o-o-o-o-o-oo-o--o-o-o-o-o-o-o-o-o-o--"]
-      (is (= [[[0 22] [7 33]] [[0 3] [7 14]] [[8 12] [15 20]]]
+      (is (= [[[0 3] [7 14]] [[0 22] [7 33]] [[8 12] [15 20]]]
              (detect-invaders {:radar-lines (str/split radar #"\n")} )))))
 
   (testing "shifted lines"
