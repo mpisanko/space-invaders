@@ -129,7 +129,8 @@
   [{:keys [radar-lines tolerance match-fn]
     :or {match-fn (partial fuzzy-matcher 100)
          tolerance 0}}]
-  (let [allowed-range (take (- (count radar-lines) tolerance) radar-lines)
+  (let [;; require that at least five lines are visible horizontally
+        allowed-range (take (- (count radar-lines) 5) radar-lines)
         find-starting-points-for (fn [top-line]
                                    (keep-indexed
                                      (fn [idx line]
@@ -148,9 +149,10 @@
                                            :starting-positions starting-positions
                                            :tolerance          tolerance
                                            :match-fn           match-fn})))
-        invaders-1 (vec (find-invaders (rest invader-1) starting-positions-1))
-        invaders-2 (find-invaders (rest invader-2) starting-positions-2)]
-    (into invaders-1 invaders-2)))
+        invaders-1 (find-invaders (rest invader-1) starting-positions-1)
+        invaders-2 (find-invaders (rest invader-2) starting-positions-2)
+        combined (sort-by ffirst (into invaders-1 invaders-2))]
+    (vec combined)))
 
 (defn safe-parse-integer
   [input default]
@@ -171,8 +173,8 @@
           tolerance   (safe-parse-integer tolerance 0)
           accuracy    (safe-parse-integer accuracy 100)
           invaders    (detect-invaders {:radar-lines radar-lines
-                                        :tolerance tolerance
-                                        :match-fn (partial fuzzy-matcher accuracy)})]
+                                        :tolerance   tolerance
+                                        :match-fn    (partial fuzzy-matcher accuracy)})]
 
       (if (seq invaders)
         (log/infof "Detected the following Invaders:\n%s" (str/join "\n" invaders))
